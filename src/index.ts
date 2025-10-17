@@ -27,10 +27,17 @@ export async function openZkKycPopup(): Promise<{
     }, 120000);
 
     function handler(event: MessageEvent) {
+
+      console.log('event.origin')
+      console.log(event.origin)
+
+      console.log(ALLOWED_ORIGIN)
+
       if (event.origin !== ALLOWED_ORIGIN) {
         return;
       }
 
+      console.log(event.data)
       const { type, proof, publicInputs, meta } = event.data || {};
       if (type !== "zk-coinbase-proof") {
         return;
