@@ -25,22 +25,46 @@ export function openPortal({
 
     const timer = setTimeout(() => {
       window.removeEventListener("message", onMsg);
-      console.warn("[SDK] Timeout waiting for proof");
       reject(new Error("Timed out waiting for proof"));
     }, timeoutMs);
 
     function onMsg(e: MessageEvent) {
-      if (e.source !== tab) return;
+  // 🔎 디버그 로그 (무조건 보이게)
+  console.log("[SDK] message:", {
+    origin: e.origin,
+    type: e.data?.type,
+    hasData: !!e.data,
+    keys: e.data ? Object.keys(e.data) : [],
+    fromSameWindow: e.source === window,
+    fromExpectedTab: e.source === tab,
+  });
 
-      console.log("[SDK] got message", { origin: e.origin, type: e.data?.type, data: e.data });
+  // 보낸 탭인지 확인 (다른 postMessage 잡음 필터링)
+  if (e.source !== tab) {
+    // console.log("[SDK] ignore: not from opened tab");
+    return;
+  }
 
-      const { type, proof, publicInputs, meta } = e.data || {};
-      if (type !== "zk-coinbase-proof" && type !== "zkproofport-proof") return;
+  // 타입 통일 체크 (원본은 'zk-coinbase-proof')
+  const { type, proof, publicInputs, meta } = e.data || {};
+  if (type !== "zk-coinbase-proof" && type !== "zkproofport-proof") {
+    // console.log("[SDK] ignore: unexpected type", type);
+    return;
+  }
 
-      clearTimeout(timer);
-      window.removeEventListener("message", onMsg);
-      resolve({ proof, publicInputs, meta });
-    }
+  // (개발 중엔 origin 필터 잠시 끔)
+  // const allowedOrigin = `${u.protocol}//${u.host}`; // e.g. https://zkproofport.com
+  // if (e.origin !== allowedOrigin) {
+  //   console.warn("[SDK] origin mismatch", { got: e.origin, allowed: allowedOrigin });
+  //   return;
+  // }
+
+  clearTimeout(timer);
+  window.removeEventListener("message", onMsg);
+  console.log("[SDK] ✅ proof received");
+  resolve({ proof, publicInputs, meta });
+}
+
 
     window.addEventListener("message", onMsg);
   });
