@@ -1,6 +1,6 @@
 {
   "name": "@zkproofport/sdk",
-  "version": "0.1.10",
+  "version": "0.1.11",
   "description": "Privacy-preserving proof SDK for zkProofport",
   "license": "MIT",
   "type": "module",
