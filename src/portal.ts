@@ -11,62 +11,56 @@ export function openPortal({
   origin = window.location.origin,
   timeoutMs = 120_000,
 }: OpenPortalParams): Promise<{ proof: string; publicInputs: string[]; meta: any }> {
-  return new Promise((resolve, reject) => {
+    return new Promise((resolve, reject) => {
     const u = new URL(portalUrl);
     const nonce = crypto.randomUUID();
-    const finalUrl =
-      `${portalUrl}?sdk=1&circuit=${encodeURIComponent(circuit)}` +
-      `&origin=${encodeURIComponent(origin)}&nonce=${nonce}`;
+    const finalUrl = `${portalUrl}?sdk=1&circuit=${encodeURIComponent(circuit)}&origin=${encodeURIComponent(origin)}&nonce=${nonce}`;
 
-    const tab = window.open(finalUrl, "_blank");
+    // 1) opener 보존 시도 (noopener=no)
+    const name = `zkproofport_${nonce}`;
+    const features = "noopener=no"; // 일부 브라우저에서 탭에도 적용됨
+    const tab = window.open(finalUrl, name, features);
     if (!tab) return reject(new Error("Popup blocked"));
     try { tab.focus(); } catch {}
-    (window as any).__zk_tab = tab;
 
-    const timer = setTimeout(() => {
+    // 2) BroadcastChannel 백업 채널
+    const ch = new BroadcastChannel(`zkp-${nonce}`);
+    const timeout = setTimeout(() => {
       window.removeEventListener("message", onMsg);
+      ch.close();
       reject(new Error("Timed out waiting for proof"));
     }, timeoutMs);
 
+    function finish(payload: any) {
+      clearTimeout(timeout);
+      window.removeEventListener("message", onMsg);
+      ch.close();
+      resolve(payload);
+    }
+
+    // postMessage 수신 (opener 있는 경우)
     function onMsg(e: MessageEvent) {
-  // 🔎 디버그 로그 (무조건 보이게)
-  console.log("[SDK] message:", {
-    origin: e.origin,
-    type: e.data?.type,
-    hasData: !!e.data,
-    keys: e.data ? Object.keys(e.data) : [],
-    fromSameWindow: e.source === window,
-    fromExpectedTab: e.source === tab,
-  });
+      // 디버그
+      console.log("[SDK] message", {
+        origin: e.origin,
+        type: e.data?.type,
+        fromExpectedTab: e.source === tab,
+      });
+      if (e.source !== tab) return;
+      const { type, proof, publicInputs, meta } = e.data || {};
+      if (type !== "zk-coinbase-proof" && type !== "zkproofport-proof") return;
+      console.log("[SDK] ✅ proof via postMessage");
+      finish({ proof, publicInputs, meta });
+    }
 
-  // 보낸 탭인지 확인 (다른 postMessage 잡음 필터링)
-  if (e.source !== tab) {
-    // console.log("[SDK] ignore: not from opened tab");
-    return;
-  }
-
-  // 타입 통일 체크 (원본은 'zk-coinbase-proof')
-  const { type, proof, publicInputs, meta } = e.data || {};
-  if (type !== "zk-coinbase-proof" && type !== "zkproofport-proof") {
-    // console.log("[SDK] ignore: unexpected type", type);
-    return;
-  }
-
-  // (개발 중엔 origin 필터 잠시 끔)
-  // const allowedOrigin = `${u.protocol}//${u.host}`; // e.g. https://zkproofport.com
-  // if (e.origin !== allowedOrigin) {
-  //   console.warn("[SDK] origin mismatch", { got: e.origin, allowed: allowedOrigin });
-  //   return;
-  // }
-
-  clearTimeout(timer);
-  window.removeEventListener("message", onMsg);
-  console.log("[SDK] ✅ proof received");
-  resolve({ proof, publicInputs, meta });
-}
-
+    // BroadcastChannel 수신 (opener 없는 경우)
+    ch.onmessage = (e) => {
+      const { type, proof, publicInputs, meta } = e.data || {};
+      if (type !== "zk-coinbase-proof" && type !== "zkproofport-proof") return;
+      console.log("[SDK] ✅ proof via BroadcastChannel");
+      finish({ proof, publicInputs, meta });
+    };
 
     window.addEventListener("message", onMsg);
   });
 }
-
