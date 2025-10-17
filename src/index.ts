@@ -27,15 +27,16 @@ export async function openZkKycPopup(): Promise<{
     }, 120000);
 
     function handler(event: MessageEvent) {
-      console.log('origin', event.origin)
-      console.log('allow', ALLOWED_ORIGIN) 
+      if (event.origin !== ALLOWED_ORIGIN) {
+        return;
+      }
 
-      // if (event.origin !== ALLOWED_ORIGIN) return;
       const { type, proof, publicInputs, meta } = event.data || {};
-      console.log('event.data')
-      console.log(event.data)
-      if (type !== "zk-coinbase-proof") return;
+      if (type !== "zk-coinbase-proof") {
+        return;
+      }
 
+      console.log("✅ Proof received successfully from portal!"); 
       clearTimeout(timeout);
       window.removeEventListener("message", handler);
       resolve({ proof, publicInputs, meta });
