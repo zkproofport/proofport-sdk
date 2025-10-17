@@ -12,15 +12,17 @@ export function openPortal({
   timeoutMs = 120_000,
 }: OpenPortalParams): Promise<{ proof: string; publicInputs: string[]; meta: any }> {
   return new Promise((resolve, reject) => {
-    const urlObj = new URL(portalUrl);
-    const allowedOrigin = `${urlObj.protocol}//${urlObj.host}`;
-    const nonce = crypto.randomUUID();
+    const u = new URL(portalUrl);
+    const baseHost = u.hostname.replace(/^www\./, "");
+    const allow = new Set<string>([
+      `${u.protocol}//${u.hostname}`,            // e.g. https://zkproofport.com
+      `${u.protocol}//www.${baseHost}`,          // e.g. https://www.zkproofport.com
+    ]);
 
+    const nonce = crypto.randomUUID();
     const finalUrl =
-      `${portalUrl}?sdk=1&sdk=1` +
-      `&circuit=${encodeURIComponent(circuit)}` +
-      `&origin=${encodeURIComponent(origin)}` +
-      `&nonce=${nonce}`;
+      `${portalUrl}?sdk=1&circuit=${encodeURIComponent(circuit)}` +
+      `&origin=${encodeURIComponent(origin)}&nonce=${nonce}`;
 
     const tab = window.open(finalUrl, "_blank");
     if (!tab) return reject(new Error("Popup blocked"));
@@ -32,7 +34,11 @@ export function openPortal({
     }, timeoutMs);
 
     function onMsg(e: MessageEvent) {
-      if (e.origin !== allowedOrigin) return;
+      if (e.source !== tab) return;
+
+      if (!allow.has(e.origin)) {
+        return;
+      }
 
       const { type, proof, publicInputs, meta } = e.data || {};
       if (type !== "zk-coinbase-proof" && type !== "zkproofport-proof") return;
