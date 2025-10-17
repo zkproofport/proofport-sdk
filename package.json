@@ -1,0 +1,41 @@
+{
+  "name": "@zkproofport/sdk",
+  "version": "0.1.0",
+  "description": "Privacy-preserving proof SDK for zkProofport",
+  "license": "MIT",
+  "type": "module",
+  "main": "./dist/index.cjs",
+  "module": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "require": "./dist/index.cjs",
+      "import": "./dist/index.js"
+    }
+  },
+  "sideEffects": false,
+  "files": [
+    "dist"
+  ],
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "clean": "rimraf dist",
+    "release": "npm publish --access public"
+  },
+  "dependencies": {
+    "@aztec/bb.js": "^0.87.8",
+    "@ethersproject/bytes": "^5.8.0",
+    "ethers": ">=6"
+  },
+  "peerDependencies": {
+    "ethers": ">=6"
+  },
+  "devDependencies": {
+    "@types/node": "^24.8.1",
+    "rimraf": "^6.0.1",
+    "tsup": "^8.2.4",
+    "typescript": "^5.6.3"
+  }
+}

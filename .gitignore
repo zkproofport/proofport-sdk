@@ -1,0 +1,25 @@
+# deps & builds
+node_modules/
+dist/
+*.log
+*.tgz
+.npmrc
+
+# editors
+.vscode/
+.idea/
+
+# macOS
+.DS_Store
+
+# tests/coverage (있다면)
+coverage/
+.jest/
+
+# local playground / examples (있다면)
+playground/
+examples/
+
+# env
+.env
+.env.*
