@@ -33,9 +33,9 @@ export async function openZkKycPopup(): Promise<{
 
       console.log(ALLOWED_ORIGIN)
 
-      if (event.origin !== ALLOWED_ORIGIN) {
-        return;
-      }
+      // if (event.origin !== ALLOWED_ORIGIN) {
+      //   return;
+      // }
 
       console.log(event.data)
       const { type, proof, publicInputs, meta } = event.data || {};
