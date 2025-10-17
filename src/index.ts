@@ -1,4 +1,6 @@
-export { openPortal } from "./portal";
-export { verifyOffchain, verifyOnchain } from "./verify";
-export { validateMetadata, type ProofMeta } from "./metadata";
-export { getCircuit, registerCircuit, type CircuitSpec, type CircuitId } from "./circuits/registry";
+export * from "./portal";
+export * from "./verify";
+export * from "./meta";
+export * from "./circuits";
+export * from "./constants";
+;
