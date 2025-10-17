@@ -18,7 +18,17 @@ export async function openZkKycPopup(): Promise<{
     const nonce = crypto.randomUUID();
     const url = `${PROOF_PORTAL_URL}?origin=${encodeURIComponent(origin)}&nonce=${nonce}`;
 
-    const popup = window.open(url, "_blank");
+    const width = 900;
+    const height = 750;
+    const left = window.screenX + (window.outerWidth - width) / 2;
+    const top = window.screenY + (window.outerHeight - height) / 2;
+
+    const popup = window.open(
+      url,
+      "zkProofportPopup",
+      `width=${width},height=${height},left=${left},top=${top}`
+    );
+
     if (!popup) return reject(new Error("Popup blocked"));
 
     const timeout = setTimeout(() => {
