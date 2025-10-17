@@ -1,5 +1,5 @@
 export const PROOF_PORTAL_URL = "https://zkproofport.com/portal/";
-export const ALLOWED_ORIGIN = "https://zkproofport.com/portal/";
+export const ALLOWED_ORIGIN = "https://zkproofport.com";
 export const COINBASE_CONTRACT =
   "0x357458739F90461b99789350868CD7CF330Dd7EE";
 export const CIRCUIT_URL =
