@@ -27,23 +27,22 @@ export async function openZkKycPopup(): Promise<{
     }, 120000);
 
     function handler(event: MessageEvent) {
-
-      console.log('event.origin')
-      console.log(event.origin)
-
-      console.log(ALLOWED_ORIGIN)
+      console.log('[DAPP] Message event received', event);
+      console.log('event.origin', event.origin);
+      console.log('ALLOWED_ORIGIN', ALLOWED_ORIGIN);
 
       // if (event.origin !== ALLOWED_ORIGIN) {
+      //   console.warn(`[DAPP] REJECTED message from unknown origin. Expected: "${ALLOWED_ORIGIN}", but got: "${event.origin}"`);
       //   return;
       // }
-
-      console.log(event.data)
+      
       const { type, proof, publicInputs, meta } = event.data || {};
       if (type !== "zk-coinbase-proof") {
+        console.warn(`[DAPP] IGNORED message with wrong type. Expected: "zk-coinbase-proof", but got: "${type}"`, event.data);
         return;
       }
 
-      console.log("✅ Proof received successfully from portal!"); 
+      console.log('[DAPP] SUCCESS! Proof message validated and processed.');
       clearTimeout(timeout);
       window.removeEventListener("message", handler);
       resolve({ proof, publicInputs, meta });
