@@ -46,7 +46,7 @@ export function openPortal({
         type: e.data?.type,
         fromExpectedTab: e.source === tab,
       });
-      if (e.source !== tab) return;
+    //   if (e.source !== tab) return;
       const { type, proof, publicInputs, meta } = e.data || {};
       if (type !== "zk-coinbase-proof" && type !== "zkproofport-proof") return;
       console.log("[SDK] ✅ proof via postMessage");
