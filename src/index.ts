@@ -24,8 +24,8 @@ export async function openZkKycPopup(): Promise<{
     iframe.style.top = '50%';
     iframe.style.left = '50%';
     iframe.style.transform = 'translate(-50%, -50%)';
-    iframe.style.width = '1200px';
-    iframe.style.height = '900px';
+    iframe.style.width = '1000px';
+    iframe.style.height = '700px';
     iframe.style.border = '1px solid #ccc';
     iframe.style.borderRadius = '8px';
     iframe.style.zIndex = '10000';
@@ -36,6 +36,14 @@ export async function openZkKycPopup(): Promise<{
       reject(new Error("Timed out waiting for proof"));
     }, 120000);
 
+    const cleanup = () => {
+      clearTimeout(timeout);
+      window.removeEventListener("message", handler);
+      if (document.body.contains(iframe)) {
+        iframe.remove();
+      }
+    };
+
     function handler(event: MessageEvent) {
       console.log('[DAPP] Message event received', event);
       console.log('event.origin', event.source);
@@ -43,17 +51,19 @@ export async function openZkKycPopup(): Promise<{
       // if (event.source !== iframe.contentWindow) return;
       
       const { type, proof, publicInputs, meta } = event.data || {};
-      if (type !== "zk-coinbase-proof") {
-        console.warn(`[DAPP] IGNORED message with wrong type. Expected: "zk-coinbase-proof", but got: "${type}"`, event.data);
+      if (type === "zk-coinbase-proof") {
+        console.log('[DAPP] SUCCESS! Proof message processed.');
+        cleanup(); 
+        resolve({ proof, publicInputs, meta });
+
+      } else if (type === "zk-coinbase-close-request") {
+        console.log('[DAPP] Close request received from portal.');
+        cleanup();
+        reject(new Error("User closed the portal.")); 
+      
+      } else {
         return;
       }
-
-      console.log('[DAPP] SUCCESS! Proof message validated and processed.');
-      clearTimeout(timeout);
-      window.removeEventListener("message", handler);
-      iframe.remove();
-
-      resolve({ proof, publicInputs, meta });
     }
 
     window.addEventListener("message", handler);
