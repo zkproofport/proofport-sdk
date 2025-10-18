@@ -1,4 +1,3 @@
-````markdown
 # ZKProofport SDK
 
 The easiest way to verify on-chain identity without exposing wallet addresses. The ZKProofport SDK allows you to integrate powerful privacy features into your dApp with just a few lines of code.
