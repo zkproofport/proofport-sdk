@@ -62,12 +62,13 @@ function MyComponent() {
 
 ### `verifyZkKycProof(proofData, options?)`
 
-  * Verifies the `proofData` object returned from `openZkKycPopup`.
-  * **`options` (optional):**
-      * `mode`: `"offchain"` (default) or `"onchain"`.
-      * `provider`: (Required for on-chain mode) An Ethers.js `JsonRpcProvider` instance.
-      * `verifierAddress`: (Optional for on-chain mode) The deployed verifier contract address (a default is provided).
-  * **Returns:** A `Promise` that resolves with `{ success: true, ... }` or `{ success: false, error: string }`.
+* Verifies the `proofData` object returned from `openZkKycPopup`.
+* **`options` (optional):**
+    * `mode`: `"offchain"` (default) or `"onchain"`.
+    * `provider`: (Required for on-chain mode) An Ethers.js `JsonRpcProvider` instance.
+    * `verifierAddress`: (Optional for on-chain mode) The deployed verifier contract address.
+        * **Default Verifier on Base Mainnet:** [`0xB3705B6d33Fe7b22e86130Fa12592B308a191483`](https://basescan.org/address/0xB3705B6d33Fe7b22e86130Fa12592B308a191483#code)
+* **Returns:** A `Promise` that resolves with `{ success: true, ... }` or `{ success: false, error: string }`.
 
 ## Current Status & Future Direction
 
