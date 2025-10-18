@@ -24,8 +24,8 @@ export async function openZkKycPopup(): Promise<{
     iframe.style.top = '50%';
     iframe.style.left = '50%';
     iframe.style.transform = 'translate(-50%, -50%)';
-    iframe.style.width = '1000px';
-    iframe.style.height = '800px';
+    iframe.style.width = '1200px';
+    iframe.style.height = '900px';
     iframe.style.border = '1px solid #ccc';
     iframe.style.borderRadius = '8px';
     iframe.style.zIndex = '10000';
