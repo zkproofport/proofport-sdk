@@ -24,8 +24,8 @@ export async function openZkKycPopup(): Promise<{
     iframe.style.top = '50%';
     iframe.style.left = '50%';
     iframe.style.transform = 'translate(-50%, -50%)';
-    iframe.style.width = '600px';
-    iframe.style.height = '750px';
+    iframe.style.width = '1000px';
+    iframe.style.height = '800px';
     iframe.style.border = '1px solid #ccc';
     iframe.style.borderRadius = '8px';
     iframe.style.zIndex = '10000';
@@ -39,12 +39,8 @@ export async function openZkKycPopup(): Promise<{
     function handler(event: MessageEvent) {
       console.log('[DAPP] Message event received', event);
       console.log('event.origin', event.source);
-      console.log('ALLOWED_ORIGIN', iframe.contentWindow);
+      console.log('contentWindow', iframe.contentWindow);
       // if (event.source !== iframe.contentWindow) return;
-      // if (event.origin !== ALLOWED_ORIGIN) {
-      //   console.warn(`[DAPP] REJECTED message from unknown origin. Expected: "${ALLOWED_ORIGIN}", but got: "${event.origin}"`);
-      //   return;
-      // }
       
       const { type, proof, publicInputs, meta } = event.data || {};
       if (type !== "zk-coinbase-proof") {
@@ -55,6 +51,8 @@ export async function openZkKycPopup(): Promise<{
       console.log('[DAPP] SUCCESS! Proof message validated and processed.');
       clearTimeout(timeout);
       window.removeEventListener("message", handler);
+      iframe.remove();
+
       resolve({ proof, publicInputs, meta });
     }
 
