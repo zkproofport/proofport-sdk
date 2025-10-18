@@ -18,18 +18,18 @@ export async function openZkKycPopup(): Promise<{
     const nonce = crypto.randomUUID();
     const url = `${PROOF_PORTAL_URL}?origin=${encodeURIComponent(origin)}&nonce=${nonce}`;
 
-    const width = 900;
-    const height = 750;
-    const left = window.screenX + (window.outerWidth - width) / 2;
-    const top = window.screenY + (window.outerHeight - height) / 2;
-
-    const popup = window.open(
-      url,
-      "zkProofportPopup",
-      `width=${width},height=${height},left=${left},top=${top}`
-    );
-
-    if (!popup) return reject(new Error("Popup blocked"));
+    const iframe = document.createElement('iframe');
+    iframe.src = url;
+    iframe.style.position = 'fixed';
+    iframe.style.top = '50%';
+    iframe.style.left = '50%';
+    iframe.style.transform = 'translate(-50%, -50%)';
+    iframe.style.width = '600px';
+    iframe.style.height = '750px';
+    iframe.style.border = '1px solid #ccc';
+    iframe.style.borderRadius = '8px';
+    iframe.style.zIndex = '10000';
+    document.body.appendChild(iframe);
 
     const timeout = setTimeout(() => {
       window.removeEventListener("message", handler);
@@ -38,9 +38,9 @@ export async function openZkKycPopup(): Promise<{
 
     function handler(event: MessageEvent) {
       console.log('[DAPP] Message event received', event);
-      console.log('event.origin', event.origin);
-      console.log('ALLOWED_ORIGIN', ALLOWED_ORIGIN);
-
+      console.log('event.origin', event.source);
+      console.log('ALLOWED_ORIGIN', iframe.contentWindow);
+      // if (event.source !== iframe.contentWindow) return;
       // if (event.origin !== ALLOWED_ORIGIN) {
       //   console.warn(`[DAPP] REJECTED message from unknown origin. Expected: "${ALLOWED_ORIGIN}", but got: "${event.origin}"`);
       //   return;
