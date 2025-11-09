@@ -1,32 +1,51 @@
 import { UltraHonkBackend } from "@aztec/bb.js";
-import { Wallet, Contract, JsonRpcProvider } from "ethers";
-import { arrayify, hexZeroPad } from "@ethersproject/bytes";
+import { Contract, JsonRpcProvider, ethers } from "ethers";
+
+type BytesInput = string | Uint8Array | number[];
+
+export function toBytes(data: BytesInput): Uint8Array {
+  if (typeof data === "string") return ethers.getBytes(data);
+  if (data instanceof Uint8Array) return data;
+  if (Array.isArray(data)) return Uint8Array.from(data);
+  throw new Error("Unsupported bytes input");
+}
+
+export function toHex(data: BytesInput): string {
+  return ethers.hexlify(toBytes(data));
+}
 
 export async function verifyProof(
-  proofHex: string,
+  proofHex: string | Uint8Array | number[],
   publicInputs: any,
   circuitUrl: string,
 ): Promise<boolean> {
   try {
     const metadata = await fetch(circuitUrl).then((res) => res.json());
-
     const backend = new UltraHonkBackend(metadata.bytecode, { threads: 4 });
 
-    const proofBytes = hexToBytes(proofHex);
-    const result = await backend.verifyProof(
-      {
-        proof: proofBytes,
-        publicInputs,
-      },
-      { keccak: true }
-    );
+    const proofBytes = toBytes(proofHex);
+    const ok = await backend.verifyProof({ proof: proofBytes, publicInputs }, { keccak: true });
+
     backend.destroy();
-    return result;
+    return ok;
   } catch (err) {
     console.error("Verification failed:", err);
     return false;
   }
 }
+
+const VERIFIER_ABI = [
+  "function verify(bytes proof, bytes32[] publicInputs) view returns (bool)",
+  "error PublicInputsLengthWrong(uint256 expected, uint256 actual)",
+  "error ProofLengthWrong(uint256 expected, uint256 actual)",
+  "error SumcheckFailed()",
+  "error ShpleminiFailed()",
+];
+
+const toHex32 = (x: string) => {
+  const h = x.startsWith("0x") ? x.slice(2) : x;
+  return "0x" + h.padStart(64, "0").slice(-64).toLowerCase();
+};
 
 export async function verifyOnchain({
   proof,
@@ -34,33 +53,35 @@ export async function verifyOnchain({
   verifierAddress,
   provider
 }: {
-  proof: string;
+  proof: string | Uint8Array | number[];
   publicInputs: string[];
   verifierAddress: string;
   provider: JsonRpcProvider;
 }): Promise<boolean> {
-  const abi = ["function verify(bytes calldata _proof, bytes32[] calldata _publicInputs) external view returns (bool)"];
-  const signer = Wallet.createRandom().connect(provider)
-  const contract = new Contract(verifierAddress, abi, signer);
+  const contract = new Contract(verifierAddress, VERIFIER_ABI, provider);
 
-  const proofBytes = arrayify(proof);
-  const formattedInputs = publicInputs.map(x => hexZeroPad(x, 32));
+  console.log("[ZKPROOFPORT][SDK][ONCHAIN] inputs.len =", publicInputs.length);
+  console.log("[ZKPROOFPORT][SDK][ONCHAIN] inputs[0..2] =", publicInputs.slice(0, 3));
+
+  const proofBytes = toBytes(proof);
+  const formattedInputs = publicInputs.map(toHex32);
 
   try {
-    return await contract.verify(proofBytes, formattedInputs);
-  } catch (err) {
-    console.error("Onchain verification failed:", err);
+    // v6 staticCall
+    const ok = await contract.verify.staticCall(proofBytes, formattedInputs);
+    return Boolean(ok);
+  } catch (err: any) {
+    const data = err?.data ?? err?.info?.error?.data ?? err?.error?.data;
+    if (data) {
+      try {
+        const decoded = contract.interface.parseError(data);
+        console.error("[ZKPROOFPORT][SDK][ONCHAIN] revert:", decoded?.name, decoded?.args);
+      } catch {
+        console.error("[ZKPROOFPORT][SDK][ONCHAIN] revert (unknown):", data);
+      }
+    } else {
+      console.error("[ZKPROOFPORT][SDK][ONCHAIN] call error:", err);
+    }
     return false;
   }
 }
-
-const hexToBytes = (hex: string | Uint8Array): Uint8Array => {
-  if (typeof hex !== "string") return new Uint8Array(hex); 
-
-  if (hex.startsWith("0x")) hex = hex.slice(2);
-  const bytes = new Uint8Array(hex.length / 2);
-  for (let i = 0; i < bytes.length; i++) {
-    bytes[i] = parseInt(hex.slice(i * 2, i * 2 + 2), 16);
-  }
-   return bytes;
-};

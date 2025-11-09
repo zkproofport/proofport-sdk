@@ -27,7 +27,8 @@
   "dependencies": {
     "@aztec/bb.js": "^0.87.8",
     "@ethersproject/bytes": "^5.8.0",
-    "ethers": ">=6"
+    "ethers": ">=6",
+    "merkletreejs": "^0.6.0"
   },
   "peerDependencies": {
     "ethers": ">=6"
