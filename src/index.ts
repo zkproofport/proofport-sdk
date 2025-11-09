@@ -13,6 +13,10 @@ function dbg(...args: any[]) {
   if (DBG) console.log("[ZKPROOFPORT][SDK]", ...args);
 }
 
+const premiumOrigins = [
+  'https://proofport-demo.netlify.app',
+];
+
 export type ProofResult =
   | { success: true; proof: string; publicInputs: any }
   | { success: false; error: string };
@@ -33,8 +37,15 @@ export async function openProofPortal(options: {
     const origin = window.location.origin;
     const nonce = crypto.randomUUID();
     
-    const url = `${PROOF_PORTAL_URL}?origin=${encodeURIComponent(origin)}&nonce=${nonce}&circuitId=${encodeURIComponent(circuitId)}`;
-    const displayURL = new URL(PROOF_PORTAL_URL).origin + "/portal";
+    let portalBaseUrl = PROOF_PORTAL_URL;
+    
+    if (premiumOrigins.includes(origin)) {
+      portalBaseUrl = portalBaseUrl.replace("/portal", "/portal-premium");
+      console.log("[SDK] Premium origin detected. Using fast-mode portal.");
+    }
+
+    const url = `${portalBaseUrl}?origin=${encodeURIComponent(origin)}&nonce=${nonce}&circuitId=${encodeURIComponent(circuitId)}`;
+    const displayURL = new URL(portalBaseUrl).origin + new URL(portalBaseUrl).pathname;
 
     if (!document.getElementById('zkp-styles')) {
       const style = document.createElement('style');
